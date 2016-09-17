@@ -3,6 +3,7 @@
   "version": "0.7.2",
   "description": "Simple but physical engine for voxel games",
   "main": "lib/index.js",
+  "typings": "lib/index.d.ts",
   "scripts": {
     "prepublish": "npm run install:typings && npm run build",
     "install:typings": "typings install",

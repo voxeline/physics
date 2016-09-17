@@ -23,11 +23,11 @@ export interface TestVoxel {
 }
 
 export interface PhysicsOptions {
-  gravity: vec3;
-  airFriction: number;
-  minBounceImpulse: number;
-  fluidDensity: number;
-  fluidDrag: number;
+  gravity?: vec3;
+  airFriction?: number;
+  minBounceImpulse?: number;
+  fluidDensity?: number;
+  fluidDrag?: number;
 }
 
 const v0 = vec3.create();
