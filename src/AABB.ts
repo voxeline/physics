@@ -10,12 +10,11 @@ class AABB {
   mag: number;
 
   constructor(pos: vec3, vec: vec3) {
-    const pos2 = vec3.create();
-    vec3.add(pos2, pos, vec);
+    vec3.add(v0, pos, vec);
 
-    this.base = vec3.min(vec3.create(), pos, pos2);
+    this.base = vec3.min(vec3.create(), pos, v0);
     this.vec = vec3.clone(vec);
-    this.max = vec3.max(vec3.create(), pos, pos2);
+    this.max = vec3.max(vec3.create(), pos, v0);
 
     this.mag = vec3.length(this.vec);
   }
