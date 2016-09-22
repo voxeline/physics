@@ -28,8 +28,8 @@ class RigidBody {
   _impulses: vec3;
 
   constructor(
-    _aabb: AABB, mass: number, friction: number, restitution: number, gravMult: number, onCollide: OnCollide,
-    autoStep?: boolean
+    _aabb: AABB, mass: number, friction: number, restitution: number, gravMult: number,
+    onCollide?: OnCollide, autoStep?: boolean
   ) {
     this.aabb = new AABB(_aabb.base, _aabb.vec); // clone
     this.mass = mass;
