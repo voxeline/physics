@@ -106,6 +106,16 @@ class Physics {
     b.aabb = b.onCollide = null; // in case it helps the GC
   }
 
+  add(b: RigidBody): void {
+    const i = this.bodies.indexOf(b);
+    if (i >= 0) return;
+    this.bodies.push(b);
+  }
+
+  remove(b: RigidBody): void {
+    return this.removeBody(b);
+  }
+
   /*
   *    PHYSICS AND COLLISIONS
   */
