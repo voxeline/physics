@@ -7,7 +7,7 @@
   "scripts": {
     "prepublish": "npm run install:typings && npm run build",
     "install:typings": "typings install",
-    "lint": "tslint src/*",
+    "lint": "tslint -c tslint.json \"src/**/*.+(ts|tsx)\"",
     "test": "npm run lint",
     "clean": "rimraf lib",
     "build": "npm run clean && tsc",
@@ -36,7 +36,7 @@
   "devDependencies": {
     "rimraf": "^2.5.4",
     "tslint": "^3.15.1",
-    "typescript": "^1.8.10",
+    "typescript": "^2.0.3",
     "typings": "^1.3.3"
   }
 }
