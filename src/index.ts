@@ -1,8 +1,5 @@
-import Physics, {
-  PhysicsOptions,
-  TestVoxel,
-} from './Physics';
-
+import Physics, { PhysicsOptions } from './Physics';
+import { TestVoxel } from './sweep';
 import RigidBody from './RigidBody';
 import AABB from './AABB';
 

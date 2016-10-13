@@ -1,26 +1,13 @@
 import vec3 = require('gl-matrix/src/gl-matrix/vec3');
 import RigidBody, { OnCollide } from './RigidBody';
 import objectAssign = require('object-assign');
-const sweep: Sweep = require('voxel-aabb-sweep');
-
+import sweep, { TestVoxel } from './sweep';
 import AABB from './AABB';
 
 import {
   equals,
   cloneAABB,
 } from './utils';
-
-interface Sweep {
-  (getVoxel: TestVoxel, box: AABB, dir: vec3, callback: SweepCallback, noTranslate?: boolean, epsilon?: number): any;
-}
-
-interface SweepCallback {
-  (cumulativeT: number, axis: number, dir: number, left: number[]): any;
-}
-
-export interface TestVoxel {
-  (x: number, y: number, z: number): boolean;
-}
 
 export interface PhysicsOptions {
   gravity?: vec3;
