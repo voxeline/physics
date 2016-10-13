@@ -22,6 +22,8 @@ const max_arr = vec3.create();
 const left_arr = vec3.create();
 const result_arr = vec3.create();
 
+const v0 = vec3.create();
+
 // core implementation:
 
 function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, base: vec3, max: vec3, epsilon: number) {
@@ -66,10 +68,9 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
 
   // reached the end of the vector unobstructed, finish and exit
   cumulative_t += max_t;
-  for (let i = 0; i < 3; i++) {
-    base[i] += vec[i];
-    max[i] += vec[i];
-  }
+  vec3.add(base, base, vec);
+  vec3.add(max, max, vec);
+
   return cumulative_t;
 
   // low-level implementations of each step:
@@ -148,12 +149,11 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
     // vector moved so far, and left to move
     const done = t / max_t;
     const left = left_arr;
-    for (let i = 0; i < 3; i++) {
-      const dv = vec[i] * done;
-      base[i] += dv;
-      max[i] += dv;
-      left[i] = vec[i] - dv;
-    }
+
+    vec3.scale(v0, vec, done);
+    vec3.add(base, base, v0);
+    vec3.add(max, max, v0);
+    vec3.sub(left, vec, v0);
 
     // set leading edge of stepped axis exactly to voxel boundary
     // else we'll sometimes rounding error beyond it
@@ -170,7 +170,7 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
     if (res) return true;
 
     // init for new sweep along vec
-    for (let i = 0; i < 3; i++) vec[i] = left[i];
+    vec3.copy(vec, left);
     initSweep();
     if (max_t === 0) return true; // no vector left
 
@@ -214,11 +214,9 @@ function sweep(getVoxel: TestVoxel, box: AABB, dir: vec3, callback: SweepCallbac
   const result = result_arr;
 
   // init parameter float arrays
-  for (let i = 0; i < 3; i++) {
-    vec[i] = +dir[i];
-    max[i] = +box.max[i];
-    base[i] = +box.base[i];
-  }
+  vec3.copy(vec, dir);
+  vec3.copy(max, box.max);
+  vec3.copy(base, box.base);
 
   if (!epsilon) epsilon = 1e-10;
 
