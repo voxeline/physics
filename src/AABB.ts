@@ -7,16 +7,26 @@ class AABB {
   vec: vec3;
   base: vec3;
   max: vec3;
-  mag: number;
 
-  constructor(pos: vec3, vec: vec3) {
-    vec3.add(v0, pos, vec);
+  constructor(center: vec3, vec: vec3) {
+    this.vec = vec3.create();
+    this.base = vec3.create();
+    this.max = vec3.create();
 
-    this.base = vec3.min(vec3.create(), pos, v0);
-    this.vec = vec3.clone(vec);
-    this.max = vec3.max(vec3.create(), pos, v0);
+    this.setCenterSize(center, vec);
+  }
 
-    this.mag = vec3.length(this.vec);
+  setCenterSize(center: vec3, vec: vec3) {
+    vec3.copy(this.vec, vec);
+
+    return this.setCenter(center);
+  }
+
+  setCenter(center: vec3) {
+    const sizeHalf = vec3.scale(v0, this.vec, 0.5);
+    vec3.sub(this.base, center, sizeHalf);
+    vec3.add(this.max, center, sizeHalf);
+    return this;
   }
 
   width() {
@@ -58,12 +68,6 @@ class AABB {
   translate(by: vec3) {
     vec3.add(this.max, this.max, by);
     vec3.add(this.base, this.base, by);
-    return this;
-  }
-
-  setPosition(pos: vec3) {
-    vec3.add(this.max, pos, this.vec);
-    vec3.copy(this.base, pos);
     return this;
   }
 
