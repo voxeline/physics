@@ -196,8 +196,8 @@ class Physics {
       // First pass at handling fluids. Assumes fluids are settled
       //   thus, only check at center of body, and only from bottom up
       const box = b.aabb;
-      const cx = Math.floor((box.base[0] + box.max[0]) / 2);
-      const cz = Math.floor((box.base[2] + box.max[2]) / 2);
+      const cx = Math.floor(box.center[0]);
+      const cz = Math.floor(box.center[2]);
       const y0 = Math.floor(box.base[1]);
       const y1 = Math.floor(box.max[1]);
       let submerged = 0;

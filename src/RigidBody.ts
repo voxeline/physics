@@ -48,15 +48,6 @@ class RigidBody {
     this._impulses = vec3.create();
   }
 
-  setPosition(p: vec3) {
-    vec3.subtract(v0, p, this.aabb.base);
-    this.aabb.translate(v0);
-  }
-
-  getPosition() {
-    return vec3.clone(this.aabb.base);
-  }
-
   applyForce(f: vec3) {
     vec3.add(this._forces, this._forces, f);
   }
