@@ -114,6 +114,12 @@ class Physics {
     for (let i = 0, len = this.bodies.length; i < len; ++i) {
       const b = this.bodies[i];
       vec3.copy(oldResting, b.resting);
+      vec3.set(b.resting, 0, 0, 0);
+
+      // cache old position for use in autostepping
+      if (b.autoStep) {
+        cloneAABB(tmpBox, b.aabb);
+      }
 
       // semi-implicit Euler integration
 
@@ -127,6 +133,10 @@ class Physics {
       vec3.add(b.velocity, b.velocity, dv);
       vec3.scale(dv, a, dt);
       vec3.add(b.velocity, b.velocity, dv);
+
+      // clear forces and impulses for next timestep
+      vec3.set(b._forces, 0, 0, 0);
+      vec3.set(b._impulses, 0, 0, 0);
 
       // apply friction if body was on ground last frame
       if (oldResting[1] < 0) {
@@ -151,17 +161,12 @@ class Physics {
       // x1-x0 = v1*dt
       vec3.scale(_dx, b.velocity, dt);
 
-      // clear forces and impulses for next timestep
-      vec3.set(b._forces, 0, 0, 0);
-      vec3.set(b._impulses, 0, 0, 0);
-
-      // cache old position for use in autostepping
-      if (b.autoStep) {
-        cloneAABB(tmpBox, b.aabb);
-      }
-
       // sweeps aabb along dx and accounts for collisions
-      processCollisions(this, b.aabb, _dx, b.resting);
+      sweep(tv0, this.testSolid, b.aabb, _dx, function (dist, axis, dir, vec) {
+        b.resting[axis] = dir;
+        vec[axis] = 0;
+      });
+      b.aabb.translate(tv0);
 
       // if autostep, and on ground, run collisions again with stepped up aabb
       if (b.autoStep) {
@@ -227,16 +232,6 @@ class Physics {
   }
 }
 
-// main collision processor - sweep aabb along velocity vector and set resting vector
-function processCollisions(self: Physics, box: AABB, velocity: vec3, resting: vec3) {
-  vec3.set(resting, 0, 0, 0);
-  sweep(tv0, self.testSolid, box, velocity, function (dist, axis, dir, vec) {
-    resting[axis] = dir;
-    vec[axis] = 0;
-  });
-  box.translate(tv0);
-}
-
 const tmpBox = new AABB(vec3.set(tv0, 0, 0, 0), vec3.set(tv1, 0, 0, 0));
 const tmpResting = vec3.create();
 const targetPos = vec3.create();
@@ -286,7 +281,13 @@ function tryAutoStepping(self: Physics, b: RigidBody, oldBox: AABB, dx: vec3) {
   // now move in X/Z however far was left over before hitting the obstruction
   vec3.subtract(leftover, targetPos, oldBox.base);
   leftover[1] = 0;
-  processCollisions(self, oldBox, leftover, tmpResting);
+
+  vec3.set(tmpResting, 0, 0, 0);
+  sweep(tv0, self.testSolid, oldBox, leftover, function (dist, axis, dir, vec) {
+    tmpResting[axis] = dir;
+    vec[axis] = 0;
+  });
+  oldBox.translate(tv0);
 
   // bail if no movement happened in the originally blocked direction
   if (xBlocked && !equals(oldBox.base[0], targetPos[0])) return;
