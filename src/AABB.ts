@@ -4,12 +4,12 @@ const v0 = vec3.create();
 const v1 = vec3.create();
 
 class AABB {
-  vec: vec3;
+  size: vec3;
   base: vec3;
   max: vec3;
 
   constructor(center: vec3, vec: vec3) {
-    this.vec = vec3.create();
+    this.size = vec3.create();
     this.base = vec3.create();
     this.max = vec3.create();
 
@@ -17,28 +17,28 @@ class AABB {
   }
 
   setCenterSize(center: vec3, vec: vec3) {
-    vec3.copy(this.vec, vec);
+    vec3.copy(this.size, vec);
 
     return this.setCenter(center);
   }
 
   setCenter(center: vec3) {
-    const sizeHalf = vec3.scale(v0, this.vec, 0.5);
+    const sizeHalf = vec3.scale(v0, this.size, 0.5);
     vec3.sub(this.base, center, sizeHalf);
     vec3.add(this.max, center, sizeHalf);
     return this;
   }
 
   width() {
-    return this.vec[0];
+    return this.size[0];
   }
 
   height() {
-    return this.vec[1];
+    return this.size[1];
   }
 
   depth() {
-    return this.vec[2];
+    return this.size[2];
   }
 
   x0() {

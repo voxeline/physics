@@ -208,9 +208,9 @@ class Physics {
         // find how much of body is submerged
         const fluidLevel = y0 + submerged;
         const heightInFluid = fluidLevel - box.base[1];
-        let ratioInFluid = heightInFluid / box.vec[1];
+        let ratioInFluid = heightInFluid / box.size[1];
         if (ratioInFluid > 1) ratioInFluid = 1;
-        const vol = box.vec[0] * box.vec[1] * box.vec[2];
+        const vol = box.size[0] * box.size[1] * box.size[2];
         const displaced = vol * ratioInFluid;
         // bouyant force = -gravity * fluidDensity * volumeDisplaced
         vec3.scale(g, this.gravity, -b.gravityMultiplier * this.fluidDensity * displaced);

@@ -31,7 +31,7 @@ class RigidBody {
     _aabb: AABB, mass: number, friction: number, restitution: number, gravMult: number,
     onCollide?: OnCollide, autoStep?: boolean
   ) {
-    this.aabb = new AABB(_aabb.base, _aabb.vec); // clone
+    this.aabb = new AABB(_aabb.base, _aabb.size); // clone
     this.mass = mass;
     // max friction force - i.e. friction coefficient times gravity
     this.friction = friction;
