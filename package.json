@@ -23,8 +23,7 @@
   ],
   "dependencies": {
     "gl-matrix": "^2.3.2",
-    "object-assign": "^4.1.0",
-    "voxel-aabb-sweep": "^0.5.0"
+    "object-assign": "^4.1.0"
   },
   "repository": {
     "type": "git",
