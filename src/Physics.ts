@@ -230,10 +230,11 @@ class Physics {
 // main collision processor - sweep aabb along velocity vector and set resting vector
 function processCollisions(self: Physics, box: AABB, velocity: vec3, resting: vec3) {
   vec3.set(resting, 0, 0, 0);
-  return sweep(self.testSolid, box, velocity, function (dist, axis, dir, vec) {
+  sweep(v0, self.testSolid, box, velocity, function (dist, axis, dir, vec) {
     resting[axis] = dir;
     vec[axis] = 0;
   });
+  box.translate(v0);
 }
 
 const tmpBox = new AABB(vec3.set(v0, 0, 0, 0), vec3.set(v1, 0, 0, 0));
@@ -261,23 +262,25 @@ function tryAutoStepping(self: Physics, b: RigidBody, oldBox: AABB, dx: vec3) {
 
   // move towards the target until the first X/Z collision
   const getVoxels = self.testSolid;
-  sweep(getVoxels, oldBox, dx, function (dist, axis, dir, vec) {
+  sweep(v0, getVoxels, oldBox, dx, function (dist, axis, dir, vec) {
     if (axis === 1) {
       vec[axis] = 0;
     } else {
       return true;
     }
   });
+  oldBox.translate(v0);
 
   const y = b.aabb.base[1];
   const ydist = Math.floor(y + 1.001) - y;
   vec3.set(upvec, 0, ydist, 0);
   let collided = false;
   // sweep up, bailing on any obstruction
-  sweep(getVoxels, oldBox, upvec, function (dist, axis, dir, vec) {
+  sweep(v0, getVoxels, oldBox, upvec, function (dist, axis, dir, vec) {
     collided = true;
     return true;
   });
+  oldBox.translate(v0);
   if (collided) return; // could't move upwards
 
   // now move in X/Z however far was left over before hitting the obstruction

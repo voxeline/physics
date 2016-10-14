@@ -207,7 +207,7 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
 
 // conform inputs
 
-function sweep(getVoxel: TestVoxel, box: AABB, dir: vec3, callback: SweepCallback, noTranslate?: boolean, epsilon?: number) {
+function sweep(out: vec3, getVoxel: TestVoxel, box: AABB, dir: vec3, callback: SweepCallback, epsilon?: number) {
   const vec = vec_arr;
   const base = base_arr;
   const max = max_arr;
@@ -223,12 +223,9 @@ function sweep(getVoxel: TestVoxel, box: AABB, dir: vec3, callback: SweepCallbac
   // run sweep implementation
   const dist = sweep_impl(getVoxel, callback, vec, base, max, epsilon);
 
-  // translate box by distance needed to updated base value
-  if (!noTranslate) {
-    for (let i = 0; i < 3; i++) {
-      result[i] = (dir[i] > 0) ? max[i] - box.max[i] : base[i] - box.base[i];
-    }
-    box.translate(result);
+  // set out to expected box translation
+  for (let i = 0; i < 3; i++) {
+    out[i] = (dir[i] > 0) ? max[i] - box.max[i] : base[i] - box.base[i];
   }
 
   // return value is total distance moved (not necessarily magnitude of [end]-[start])
