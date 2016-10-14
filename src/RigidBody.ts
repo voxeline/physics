@@ -1,5 +1,6 @@
 import vec3 = require('gl-matrix/src/gl-matrix/vec3');
 import AABB from './AABB';
+import MergedRigidBodyList from './MergedRigidBodyList';
 
 /*
  *    RIGID BODY - internal data structure
@@ -10,6 +11,7 @@ export interface OnCollide {
   (impacts: vec3): any;
 }
 
+const zeros = vec3.create();
 const v0 = vec3.create();
 
 class RigidBody {
@@ -26,6 +28,11 @@ class RigidBody {
   inFluid: boolean;
   _forces: vec3;
   _impulses: vec3;
+  _oldResting: vec3;
+  _tmpBox: AABB;
+  _dx: vec3;
+  _merged: MergedRigidBodyList[];
+  _out: vec3;
 
   constructor(
     _aabb: AABB, mass: number, friction: number, restitution: number, gravMult: number,
@@ -33,6 +40,7 @@ class RigidBody {
   ) {
     this.aabb = new AABB(_aabb.base, _aabb.size); // clone
     this.mass = mass;
+
     // max friction force - i.e. friction coefficient times gravity
     this.friction = friction;
     this.restitution = restitution;
@@ -40,12 +48,18 @@ class RigidBody {
     this.onCollide = onCollide;
     this.autoStep = autoStep;
     this.onStep = null;
+
     // internals
     this.velocity = vec3.create();
     this.resting = vec3.fromValues(0, 0, 0);
     this.inFluid = false;
     this._forces = vec3.create();
     this._impulses = vec3.create();
+    this._oldResting = vec3.create();
+    this._tmpBox = new AABB(zeros, zeros);
+    this._dx = vec3.create();
+    this._merged = [null, null, null];
+    this._out = vec3.create();
   }
 
   applyForce(f: vec3) {

@@ -1,5 +1,6 @@
 import vec3 = require('gl-matrix/src/gl-matrix/vec3');
 import RigidBody, { OnCollide } from './RigidBody';
+import MergedRigidBodyList from './MergedRigidBodyList';
 import objectAssign = require('object-assign');
 import sweep, { TestVoxel } from './sweep';
 import AABB from './AABB';
@@ -24,9 +25,12 @@ const _friction = vec3.create();
 const a = vec3.create();
 const g = vec3.create();
 const dv = vec3.create();
-const _dx = vec3.create();
 const impacts = vec3.create();
-const oldResting = vec3.create();
+
+const tmpResting = vec3.create();
+const targetPos = vec3.create();
+const upvec = vec3.create();
+const leftover = vec3.create();
 
 const defaults: PhysicsOptions = {
   gravity: vec3.fromValues(0, -10, 0),
@@ -111,14 +115,16 @@ class Physics {
     // convert dt to seconds
     const dt = delta / 1000;
 
-    for (let i = 0, len = this.bodies.length; i < len; ++i) {
+    const bodiesLen = this.bodies.length;
+
+    for (let i = 0; i < bodiesLen; ++i) {
       const b = this.bodies[i];
-      vec3.copy(oldResting, b.resting);
+      vec3.copy(b._oldResting, b.resting);
       vec3.set(b.resting, 0, 0, 0);
 
       // cache old position for use in autostepping
       if (b.autoStep) {
-        cloneAABB(tmpBox, b.aabb);
+        cloneAABB(b._tmpBox, b.aabb);
       }
 
       // semi-implicit Euler integration
@@ -139,7 +145,7 @@ class Physics {
       vec3.set(b._impulses, 0, 0, 0);
 
       // apply friction if body was on ground last frame
-      if (oldResting[1] < 0) {
+      if (b._oldResting[1] < 0) {
         // friction force <= - u |vel|
         // max friction impulse = (F/m)*dt = (mg)/m*dt = u*g*dt = dt*b.friction
         const fMax = dt * b.friction;
@@ -157,20 +163,114 @@ class Physics {
         // not on ground, apply air resistance
         vec3.scale(b.velocity, b.velocity, this.airFriction);
       }
+    }
+
+    // TODO: Reuse object to prevent garbage collection
+    const mergedListsPerAxis: MergedRigidBodyList[][] = [[], [], []];
+
+    // Merge objects
+    for (let i = 0; i < bodiesLen; ++i) {
+      const b1 = this.bodies[i];
+      const v1 = b1.velocity;
+      const p1 = b1.aabb.center;
+
+      // TODO: Use spatial-index for iterating collidable objects
+      for (let j = i + 1; j < bodiesLen; ++j) {
+        const b2 = this.bodies[j];
+        const v2 = b2.velocity;
+        const p2 = b2.aabb.center;
+
+        if (b1.aabb.intersects(b2.aabb)) {
+          const unionSize = b1.aabb.unionSize(tv0, b2.aabb);
+
+          for (let d = 0; d < 3; ++d) {
+            // Cannot be merged if objects are moving away from each other
+            if ((p1[d] - p2[d]) * (v1[d] - v2[d]) > 0) {
+              continue;
+            }
+
+            const u = (d + 1) % 3;
+            const v = (d + 2) % 3;
+
+            const baseArea = Math.min(b1.aabb.area[d], b2.aabb.area[d]);
+            if (unionSize[u] * unionSize[v] / baseArea < 0.2 /* Area threshold */) {
+              continue;
+            }
+
+            const mergedLists = mergedListsPerAxis[d];
+
+            let list = b1._merged[d];
+
+            if (!list) {
+              // TODO: Reuse object to prevent garbage collection
+              list = b1._merged[d] = new MergedRigidBodyList(d);
+              list.add(b1);
+
+              mergedLists.push(list);
+            }
+
+            b2._merged[d] = list;
+            list.add(b2);
+          }
+        }
+      }
+    }
+
+    // Recalculate average velocity for merged objects
+    for (let i = 0; i < 3; ++i) {
+      const mergedLists = mergedListsPerAxis[i];
+      for (const list of mergedLists) {
+        const v = list.getAverageVelocity();
+        for (const b of list.bodies) {
+          b.velocity[i] = v;
+        }
+      }
+    }
+
+    // Test collision
+    for (let i = 0; i < bodiesLen; ++i) {
+      const b = this.bodies[i];
 
       // x1-x0 = v1*dt
-      vec3.scale(_dx, b.velocity, dt);
+      vec3.scale(b._dx, b.velocity, dt);
 
       // sweeps aabb along dx and accounts for collisions
-      sweep(tv0, this.testSolid, b.aabb, _dx, function (dist, axis, dir, vec) {
+      sweep(b._out, this.testSolid, b.aabb, b._dx, function (dist, axis, dir, vec) {
         b.resting[axis] = dir;
+        if (b._merged[axis]) {
+          // TODO: What if there are mutliple resting bodies in a single list?
+          b._merged[axis].resting = b;
+        }
         vec[axis] = 0;
       });
-      b.aabb.translate(tv0);
+    }
+
+    // Propagates resting result
+    for (let i = 0; i < 3; ++i) {
+      const mergedLists = mergedListsPerAxis[i];
+      for (const list of mergedLists) {
+        const { resting } = list;
+        if (resting) {
+          for (const b of list.bodies) {
+            b._out[i] = resting._out[i];
+            b.resting[i] = resting.resting[i];
+          }
+        }
+        list.reset();
+      }
+    }
+
+    for (let i = 0; i < bodiesLen; ++i) {
+      const b = this.bodies[i];
+
+      for (let k = 0; k < 3; ++k) {
+        b._merged[k] = null;
+      }
+      b.aabb.translate(b._out);
 
       // if autostep, and on ground, run collisions again with stepped up aabb
       if (b.autoStep) {
-        tryAutoStepping(this, b, tmpBox, _dx);
+        tryAutoStepping(this, b, b._tmpBox, b._dx);
       }
 
       // Collision impacts. b.resting shows which axes had collisions:
@@ -178,7 +278,7 @@ class Physics {
         impacts[j] = 0;
         if (b.resting[j]) {
           // count impact only if wasn't collided last frame
-          if (!oldResting[j]) impacts[j] = -b.velocity[j];
+          if (!b._oldResting[j]) impacts[j] = -b.velocity[j];
           b.velocity[j] = 0;
         }
       }
@@ -231,12 +331,6 @@ class Physics {
     }
   }
 }
-
-const tmpBox = new AABB(vec3.set(tv0, 0, 0, 0), vec3.set(tv1, 0, 0, 0));
-const tmpResting = vec3.create();
-const targetPos = vec3.create();
-const upvec = vec3.create();
-const leftover = vec3.create();
 
 function tryAutoStepping(self: Physics, b: RigidBody, oldBox: AABB, dx: vec3) {
   if (b.resting[1] >= 0 && !b.inFluid) return;

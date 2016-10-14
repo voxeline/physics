@@ -9,17 +9,26 @@ class AABB {
   center: vec3;
   max: vec3;
 
+  // Surface area
+  area: vec3;
+
   constructor(center: vec3, size: vec3) {
     this.size = vec3.create();
     this.base = vec3.create();
     this.center = vec3.create();
     this.max = vec3.create();
+    this.area = vec3.create();
 
     this.setCenterSize(center, size);
   }
 
   setCenterSize(center: vec3, size: vec3) {
     vec3.copy(this.size, size);
+    vec3.set(this.area,
+      size[1] * size[2],
+      size[2] * size[0],
+      size[0] * size[1]
+    );
 
     return this.setCenter(center);
   }
@@ -121,6 +130,12 @@ class AABB {
       vec3.set(v0, baseX, baseY, baseZ),
       vec3.set(v1, maxX - baseX, maxY - baseY, maxZ - baseZ)
     );
+  }
+
+  unionSize(out: vec3, aabb: AABB) {
+    const min = vec3.max(v0, aabb.base, this.base);
+    const max = vec3.min(v1, aabb.max, this.max);
+    return vec3.sub(out, max, min);
   }
 }
 
