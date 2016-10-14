@@ -3,6 +3,8 @@ import vec3 = require('gl-matrix/src/gl-matrix/vec3');
 const v0 = vec3.create();
 const v1 = vec3.create();
 
+const emptyFunction = () => {};
+
 class AABB {
   size: vec3;
   base: vec3;
@@ -12,34 +14,18 @@ class AABB {
   // Surface area
   area: vec3;
 
-  constructor(center: vec3, size: vec3) {
-    this.size = vec3.create();
+  onMove: () => any;
+
+  constructor(center: vec3, size: vec3, onMove = emptyFunction) {
+    this.size = vec3.clone(size);
     this.base = vec3.create();
-    this.center = vec3.create();
+    this.center = vec3.clone(center);
     this.max = vec3.create();
     this.area = vec3.create();
+    this.onMove = onMove;
 
-    this.setCenterSize(center, size);
-  }
-
-  setCenterSize(center: vec3, size: vec3) {
-    vec3.copy(this.size, size);
-    vec3.set(this.area,
-      size[1] * size[2],
-      size[2] * size[0],
-      size[0] * size[1]
-    );
-
-    return this.setCenter(center);
-  }
-
-  setCenter(center: vec3) {
-    vec3.copy(this.center, center);
-
-    const sizeHalf = vec3.scale(v0, this.size, 0.5);
-    vec3.sub(this.base, center, sizeHalf);
-    vec3.add(this.max, center, sizeHalf);
-    return this;
+    this.calculateSurfaceArea();
+    this.calculateVertices();
   }
 
   width() {
@@ -78,11 +64,50 @@ class AABB {
     return this.max[2];
   }
 
+  setCenter(x: number, y: number, z: number) {
+    vec3.set(this.center, x, y, z);
+    return this.updateCenter();
+  }
+
+  copyCenter(center: vec3) {
+    vec3.copy(this.center, center);
+    return this.updateCenter();
+  }
+
+  private updateCenter() {
+    this.calculateVertices();
+    this.onMove();
+    return this;
+  }
+
   translate(by: vec3) {
     vec3.add(this.max, this.max, by);
     vec3.add(this.center, this.center, by);
     vec3.add(this.base, this.base, by);
+
+    this.onMove();
     return this;
+  }
+
+  copySize(size: vec3) {
+    vec3.copy(this.size, size);
+    this.calculateSurfaceArea();
+    this.calculateVertices();
+    return this;
+  }
+
+  private calculateSurfaceArea() {
+    vec3.set(this.area,
+      this.size[1] * this.size[2],
+      this.size[2] * this.size[0],
+      this.size[0] * this.size[1]
+    );
+  }
+
+  private calculateVertices() {
+    const sizeHalf = vec3.scale(v0, this.size, 0.5);
+    vec3.sub(this.base, this.center, sizeHalf);
+    vec3.add(this.max, this.center, sizeHalf);
   }
 
   expand(aabb: AABB) {

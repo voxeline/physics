@@ -14,6 +14,10 @@ export interface OnCollide {
 const zeros = vec3.create();
 const v0 = vec3.create();
 
+export interface RigidBodyOptions {
+  onMove?: () => any;
+}
+
 class RigidBody {
   aabb: AABB;
   mass: number;
@@ -35,10 +39,10 @@ class RigidBody {
   _out: vec3;
 
   constructor(
-    _aabb: AABB, mass: number, friction: number, restitution: number, gravMult: number,
-    onCollide?: OnCollide, autoStep?: boolean
+    position: vec3, size: vec3, mass: number, friction: number, restitution: number, gravMult: number,
+    options?: RigidBodyOptions, onCollide?: OnCollide, autoStep?: boolean
   ) {
-    this.aabb = new AABB(_aabb.base, _aabb.size); // clone
+    this.aabb = new AABB(position, size, options.onMove); // clone
     this.mass = mass;
 
     // max friction force - i.e. friction coefficient times gravity
