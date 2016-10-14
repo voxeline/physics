@@ -75,27 +75,6 @@ class Physics {
   *    ADDING AND REMOVING RIGID BODIES
   */
 
-  addBody(
-    _aabb: AABB, mass?: number, friction?: number, restitution?: number,
-    gravMult?: number, onCollide?: OnCollide
-  ) {
-    _aabb = _aabb || new AABB(vec3.set(tv0, 0, 0, 0), vec3.set(tv1, 1, 1, 1));
-
-    if (typeof mass === 'undefined') mass = 1;
-    if (typeof friction === 'undefined') friction = 1;
-    if (typeof restitution === 'undefined') restitution = 0;
-    if (typeof gravMult === 'undefined') gravMult = 1;
-    const b = new RigidBody(_aabb, mass, friction, restitution, gravMult, onCollide);
-    this.bodies.push(b);
-    return b;
-  }
-
-  removeBody(b: RigidBody): void {
-    const i = this.bodies.indexOf(b);
-    if (i < 0) return undefined;
-    this.bodies.splice(i, 1);
-    b.aabb = b.onCollide = null; // in case it helps the GC
-  }
 
   add(b: RigidBody): void {
     const i = this.bodies.indexOf(b);
@@ -104,7 +83,10 @@ class Physics {
   }
 
   remove(b: RigidBody): void {
-    return this.removeBody(b);
+    const i = this.bodies.indexOf(b);
+    if (i < 0) return undefined;
+    this.bodies.splice(i, 1);
+    b.aabb = b.onCollide = null; // in case it helps the GC
   }
 
   /*
