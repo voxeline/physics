@@ -1,4 +1,4 @@
-# @voxeline/physics-engine
+# @voxeline/physics
 
 **Status: Unstable**
 

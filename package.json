@@ -1,5 +1,5 @@
 {
-  "name": "@voxeline/physics-engine",
+  "name": "@voxeline/physics",
   "version": "0.1.0",
   "description": "Simple but physical engine for voxel worlds",
   "main": "lib/index.js",
