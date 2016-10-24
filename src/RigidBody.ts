@@ -12,7 +12,6 @@ export interface OnCollide {
 }
 
 const zeros = vec3.create();
-const v0 = vec3.create();
 
 export interface RigidBodyOptions {
   onMove?: () => any;

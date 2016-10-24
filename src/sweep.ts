@@ -9,18 +9,17 @@ export interface SweepCallback {
   (cumulativeT: number, axis: number, dir: number, left: vec3): any;
 }
 
-const tr_arr = vec3.create();
-const ldi_arr = vec3.create();
-const tri_arr = vec3.create();
-const step_arr = vec3.create();
-const tDelta_arr = vec3.create();
-const tNext_arr = vec3.create();
-const vec_arr = vec3.create();
-const normed_arr = vec3.create();
-const base_arr = vec3.create();
-const max_arr = vec3.create();
-const left_arr = vec3.create();
-const result_arr = vec3.create();
+const _trArr = vec3.create();
+const _ldiArr = vec3.create();
+const _triArr = vec3.create();
+const _stepArr = vec3.create();
+const _tDeltaArr = vec3.create();
+const _tNextArr = vec3.create();
+const _vecArr = vec3.create();
+const _normedArr = vec3.create();
+const _baseArr = vec3.create();
+const _maxArr = vec3.create();
+const _leftArr = vec3.create();
 
 const v0 = vec3.create();
 
@@ -35,50 +34,50 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
   // original raycast implementation: https://github.com/andyhall/fast-voxel-raycast
   // original raycast paper: http://www.cse.chalmers.se/edu/year/2010/course/TDA361/grid.pdf
 
-  const tr = tr_arr;
-  const ldi = ldi_arr;
-  const tri = tri_arr;
-  const step = step_arr;
-  const tDelta = tDelta_arr;
-  const tNext = tNext_arr;
-  const normed = normed_arr;
+  const tr = _trArr;
+  const ldi = _ldiArr;
+  const tri = _triArr;
+  const step = _stepArr;
+  const tDelta = _tDeltaArr;
+  const tNext = _tNextArr;
+  const normed = _normedArr;
 
-  let cumulative_t = 0.0;
+  let cumulativeT = 0.0;
   let t = 0.0;
-  let max_t = 0.0;
+  let maxT = 0.0;
   let axis = 0;
 
   // init for the current sweep vector and take first step
   initSweep();
-  if (max_t === 0) return 0;
+  if (maxT === 0) return 0;
 
   axis = stepForward();
 
   // loop along raycast vector
-  while (t <= max_t) {
+  while (t <= maxT) {
     // sweeps over leading face of AABB
     if (checkCollision(axis)) {
       // calls the callback and decides whether to continue
       const done = handleCollision();
-      if (done) return cumulative_t;
+      if (done) return cumulativeT;
     }
 
     axis = stepForward();
   }
 
   // reached the end of the vector unobstructed, finish and exit
-  cumulative_t += max_t;
+  cumulativeT += maxT;
   vec3.add(base, base, vec);
   vec3.add(max, max, vec);
 
-  return cumulative_t;
+  return cumulativeT;
 
   // low-level implementations of each step:
   function initSweep() {
     // parametrization t along raycast
     t = 0.0;
-    max_t = Math.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
-    if (max_t === 0) return;
+    maxT = Math.sqrt(vec[0] * vec[0] + vec[1] * vec[1] + vec[2] * vec[2]);
+    if (maxT === 0) return;
     for (let i = 0; i < 3; i++) {
       const dir = (vec[i] >= 0);
       step[i] = dir ? 1 : -1;
@@ -89,7 +88,7 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
       ldi[i] = leadEdgeToInt(lead, step[i]);
       tri[i] = trailEdgeToInt(tr[i], step[i]);
       // normed vector
-      normed[i] = vec[i] / max_t;
+      normed[i] = vec[i] / maxT;
       // distance along t required to move one voxel in each axis
       tDelta[i] = Math.abs(1 / normed[i]);
       // location of nearest voxel boundary, in units of t
@@ -98,20 +97,19 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
     }
   }
 
-
   // check for collisions - iterate over the leading face on the advancing axis
 
-  function checkCollision(i_axis: number) {
+  function checkCollision(iAxis: number) {
     const stepx = step[0];
-    const x0 = (i_axis === 0) ? ldi[0] : tri[0];
+    const x0 = (iAxis === 0) ? ldi[0] : tri[0];
     const x1 = ldi[0] + stepx;
 
     const stepy = step[1];
-    const y0 = (i_axis === 1) ? ldi[1] : tri[1];
+    const y0 = (iAxis === 1) ? ldi[1] : tri[1];
     const y1 = ldi[1] + stepy;
 
     const stepz = step[2];
-    const z0 = (i_axis === 2) ? ldi[2] : tri[2];
+    const z0 = (iAxis === 2) ? ldi[2] : tri[2];
     const z1 = ldi[2] + stepz;
 
     // const j_axis = (i_axis + 1) % 3
@@ -127,9 +125,9 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
     // const k1 = [x1 - stepx, y1 - stepy, z1 - stepz][k_axis]
     // console.log('=== step', s, 'to', i0, '   sweep', js, j0 + ',' + j1, '   ', ks, k0 + ',' + k1)
 
-    for (let x = x0; x != x1; x += stepx) {
-      for (let y = y0; y != y1; y += stepy) {
-        for (let z = z0; z != z1; z += stepz) {
+    for (let x = x0; x !== x1; x += stepx) {
+      for (let y = y0; y !== y1; y += stepy) {
+        for (let z = z0; z !== z1; z += stepz) {
           if (getVoxel(x, y, z)) return true;
         }
       }
@@ -137,18 +135,17 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
     return false;
   }
 
-
   // on collision - call the callback and return or set up for the next sweep
 
   function handleCollision() {
 
     // set up for callback
-    cumulative_t += t;
+    cumulativeT += t;
     const dir = step[axis];
 
     // vector moved so far, and left to move
-    const done = t / max_t;
-    const left = left_arr;
+    const done = t / maxT;
+    const left = _leftArr;
 
     vec3.scale(v0, vec, done);
     vec3.add(base, base, v0);
@@ -164,7 +161,7 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
     }
 
     // call back to let client update the "left to go" vector
-    const res = callback(cumulative_t, axis, dir, left);
+    const res = callback(cumulativeT, axis, dir, left);
 
     // bail out out on truthy response
     if (res) return true;
@@ -172,46 +169,44 @@ function sweep_impl(getVoxel: TestVoxel, callback: SweepCallback, vec: vec3, bas
     // init for new sweep along vec
     vec3.copy(vec, left);
     initSweep();
-    if (max_t === 0) return true; // no vector left
+    if (maxT === 0) return true; // no vector left
 
     return false;
   }
 
-
   // advance to next voxel boundary, and return which axis was stepped
 
   function stepForward() {
-    const axis = (tNext[0] < tNext[1]) ?
+    const axis2 = (tNext[0] < tNext[1]) ?
         ((tNext[0] < tNext[2]) ? 0 : 2) :
         ((tNext[1] < tNext[2]) ? 1 : 2);
-    const dt = tNext[axis] - t;
-    t = tNext[axis];
-    ldi[axis] += step[axis];
-    tNext[axis] += tDelta[axis];
+    const dt = tNext[axis2] - t;
+    t = tNext[axis2];
+    ldi[axis2] += step[axis2];
+    tNext[axis2] += tDelta[axis2];
     for (let i = 0; i < 3; i++) {
       tr[i] += dt * normed[i];
       tri[i] = trailEdgeToInt(tr[i], step[i]);
     }
 
-    return axis;
+    return axis2;
   }
 
-  function leadEdgeToInt(coord: number, step: number) {
-    return Math.floor(coord - step * epsilon);
+  function leadEdgeToInt(coord: number, step2: number) {
+    return Math.floor(coord - step2 * epsilon);
   }
 
-  function trailEdgeToInt(coord: number, step: number) {
-    return Math.floor(coord + step * epsilon);
+  function trailEdgeToInt(coord: number, step2: number) {
+    return Math.floor(coord + step2 * epsilon);
   }
 }
 
 // conform inputs
 
 function sweep(out: vec3, getVoxel: TestVoxel, box: AABB, dir: vec3, callback: SweepCallback, epsilon?: number) {
-  const vec = vec_arr;
-  const base = base_arr;
-  const max = max_arr;
-  const result = result_arr;
+  const vec = _vecArr;
+  const base = _baseArr;
+  const max = _maxArr;
 
   // init parameter float arrays
   vec3.copy(vec, dir);

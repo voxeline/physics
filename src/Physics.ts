@@ -1,5 +1,5 @@
 import vec3 = require('gl-matrix/src/gl-matrix/vec3');
-import RigidBody, { OnCollide } from './RigidBody';
+import RigidBody from './RigidBody';
 import MergedRigidBodyList from './MergedRigidBodyList';
 import objectAssign = require('object-assign');
 import sweep, { TestVoxel } from './sweep';
@@ -19,7 +19,6 @@ export interface PhysicsOptions {
 }
 
 const tv0 = vec3.create();
-const tv1 = vec3.create();
 
 const _friction = vec3.create();
 const a = vec3.create();
@@ -74,7 +73,6 @@ class Physics {
   /*
   *    ADDING AND REMOVING RIGID BODIES
   */
-
 
   add(b: RigidBody): void {
     const i = this.bodies.indexOf(b);

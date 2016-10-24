@@ -12,7 +12,6 @@ class MergedRigidBodyList {
   }
 
   add(body: RigidBody) {
-    const resting = body.resting[this.axis];
     this.bodies.push(body);
   }
 

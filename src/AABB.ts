@@ -3,7 +3,7 @@ import vec3 = require('gl-matrix/src/gl-matrix/vec3');
 const v0 = vec3.create();
 const v1 = vec3.create();
 
-const emptyFunction = () => {};
+const emptyFunction = (): void => undefined;
 
 class AABB {
   size: vec3;
@@ -74,12 +74,6 @@ class AABB {
     return this.updateCenter();
   }
 
-  private updateCenter() {
-    this.calculateVertices();
-    this.onMove();
-    return this;
-  }
-
   translate(by: vec3) {
     vec3.add(this.max, this.max, by);
     vec3.add(this.center, this.center, by);
@@ -94,20 +88,6 @@ class AABB {
     this.calculateSurfaceArea();
     this.calculateVertices();
     return this;
-  }
-
-  private calculateSurfaceArea() {
-    vec3.set(this.area,
-      this.size[1] * this.size[2],
-      this.size[2] * this.size[0],
-      this.size[0] * this.size[1]
-    );
-  }
-
-  private calculateVertices() {
-    const sizeHalf = vec3.scale(v0, this.size, 0.5);
-    vec3.sub(this.base, this.center, sizeHalf);
-    vec3.add(this.max, this.center, sizeHalf);
   }
 
   expand(aabb: AABB) {
@@ -161,6 +141,26 @@ class AABB {
     const min = vec3.max(v0, aabb.base, this.base);
     const max = vec3.min(v1, aabb.max, this.max);
     return vec3.sub(out, max, min);
+  }
+
+  private updateCenter() {
+    this.calculateVertices();
+    this.onMove();
+    return this;
+  }
+
+  private calculateSurfaceArea() {
+    vec3.set(this.area,
+      this.size[1] * this.size[2],
+      this.size[2] * this.size[0],
+      this.size[0] * this.size[1]
+    );
+  }
+
+  private calculateVertices() {
+    const sizeHalf = vec3.scale(v0, this.size, 0.5);
+    vec3.sub(this.base, this.center, sizeHalf);
+    vec3.add(this.max, this.center, sizeHalf);
   }
 }
 
