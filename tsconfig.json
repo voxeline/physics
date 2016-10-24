@@ -7,7 +7,7 @@
     "sourceMap": true,
     "noImplicitAny" : true
   },
-  "includes": [
+  "include": [
     "src/**.*"
   ]
 }
