@@ -5,8 +5,7 @@
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "scripts": {
-    "prepublish": "npm run install:typings && npm run build",
-    "install:typings": "typings install",
+    "prepublish": "npm run build",
     "lint": "tslint -c tslint.json \"src/**/*.+(ts|tsx)\"",
     "test": "npm run lint",
     "clean": "rimraf lib",
@@ -22,6 +21,9 @@
     "engine"
   ],
   "dependencies": {
+    "@types/gl-matrix": "^2.2.32",
+    "@types/gl-matrix-types": "github:pawsong/gl-matrix-types",
+    "@types/object-assign": "^4.0.29",
     "gl-matrix": "^2.3.2",
     "object-assign": "^4.1.0"
   },
